@@ -330,30 +330,44 @@ describe(`DELETE /users/:username`, () => {
     // delete auth.current_username;
     // delete auth.user_token;
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ message: 'Deleted user!' });
+    expect(response.body).toEqual({
+      status: 200,
+      title: 'Success',
+      message: 'The operation was successful.'
+    });
   });
 
   // figure out later
-  // test('cannot delete other user', async () => {
-  //   const username = auth.current_username + '1';
-  //   const response = await request(app)
-  //     .delete(`/users/${username}`)
-  //     .set('authorization', auth.user_token);
-  //   delete auth.current_username;
-  //   delete auth.user_token;
-  //   expect(response.status).toBe(403);
-  // });
+  // should not be able to delete another user
+  test('cannot delete other user', async () => {
+    const username = 'wrongUser';
+    const response = await request(app)
+      .delete(`/users/${username}`)
+      .set('authorization', auth.user_token);
+    console.log(auth.user_token);
+    delete auth.current_username;
+    delete auth.user_token;
+    expect(response.status).toBe(403);
+  });
 });
 
-// describe(`GET / companies`, () => {
-//   test('gets all the companies', async () => {
-//     const response = await request(app)
-//       .get('/companies')
-//       .set('authorization', auth.company_token);
-//     expect(response.status).toBe(200);
-//     expect(response.body[0].name).toBe('michael');
-//   });
-// });
+describe(`GET /companies`, () => {
+  test('gets all the companies', async () => {
+    const response = await request(app)
+      .get('/companies')
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body[0].name).toBe('Warriors');
+  });
+
+  test('gets all the companies', async () => {
+    const response = await request(app)
+      .get('/companies')
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body[0].name).toBe('Warriors');
+  });
+});
 
 // describe(`GET / companies/:handle`, () => {
 //   test('gets a list of 1 company', async () => {

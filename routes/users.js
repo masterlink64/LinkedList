@@ -157,7 +157,11 @@ router.delete('/:username', ensureCorrectUser, async function(req, res, next) {
     const data = await db.query('DELETE FROM users WHERE username=$1', [
       req.params.username
     ]);
-    return res.json({ message: 'Deleted user!' });
+    return res.json({
+      status: 200,
+      title: 'Success',
+      message: 'The operation was successful.'
+    });
   } catch (err) {
     return next(err);
   }
