@@ -243,7 +243,7 @@ describe(`POST /users`, () => {
   });
 });
 
-describe(`POST / user-auth`, () => {
+describe(`POST /user-auth`, () => {
   test('successfully log in for a user', async () => {
     const response = await request(app)
       .post('/user-auth')
@@ -282,7 +282,7 @@ describe(`POST / user-auth`, () => {
   });
 });
 
-describe(`GET / users`, () => {
+describe(`GET /users`, () => {
   test('successfully gets all the users', async () => {
     const response = await request(app)
       .get('/users')
@@ -292,7 +292,7 @@ describe(`GET / users`, () => {
   });
 });
 
-describe(`GET / users/:username`, () => {
+describe(`GET /users/:username`, () => {
   test('successfully gets a list of 1 user', async () => {
     const response = await request(app)
       .get(`/users/${auth.current_username}`)
@@ -302,7 +302,7 @@ describe(`GET / users/:username`, () => {
   });
 });
 
-describe(`PATCH / users/:username`, () => {
+describe(`PATCH /users/:username`, () => {
   test('successfully updates a user', async () => {
     const response = await request(app)
       .patch(`/users/${auth.current_username}`)
@@ -322,7 +322,7 @@ describe(`PATCH / users/:username`, () => {
   });
 });
 
-describe(`DELETE / users/:username`, () => {
+describe(`DELETE /users/:username`, () => {
   test('successfully deletes own user', async () => {
     const response = await request(app)
       .delete(`/users/${auth.current_username}`)
