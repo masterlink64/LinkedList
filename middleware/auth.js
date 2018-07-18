@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const APIError = require('../APIError');
+
 function ensureloggedin(req, res, next) {
   try {
     const token = req.headers.authorization;
@@ -6,9 +8,7 @@ function ensureloggedin(req, res, next) {
 
     return next();
   } catch (err) {
-    return res.json({
-      message: 'Unauthorized'
-    });
+    return next(new APIError(401, 'Unauthorized', 'Token not recognized'));
   }
 }
 
@@ -20,14 +20,10 @@ function ensureCorrectUser(req, res, next) {
     if (decodedToken.username === req.params.username) {
       return next();
     } else {
-      return res.json({
-        message: 'Unauthorized'
-      });
+      return next(new APIError(403, 'Forbidden', 'Forbidden User'));
     }
   } catch (err) {
-    return res.json({
-      message: 'Unauthorized'
-    });
+    return next(new APIError(401, 'Unauthorized', 'Token not recognized'));
   }
 }
 
@@ -41,15 +37,10 @@ function ensureLoginUser(req, res, next) {
       req.username = decodedToken.username;
       return next();
     } else {
-      return res.json({
-        status: 401,
-        message: 'Unauthorized token'
-      });
+      return next(new APIError(403, 'Forbidden', 'Forbidden User'));
     }
   } catch (err) {
-    return res.json({
-      message: 'Unauthorized'
-    });
+    return next(new APIError(401, 'Unauthorized', 'Token not recognized'));
   }
 }
 
@@ -82,15 +73,10 @@ function ensureCorrectCompany(req, res, next) {
     if (decodedToken.handle === req.params.handle) {
       return next();
     } else {
-      return res.json({
-        status: 401,
-        message: 'Unauthorized TOKEN'
-      });
+      return next(new APIError(403, 'Forbidden', 'Forbidden User'));
     }
   } catch (err) {
-    return res.json({
-      message: 'ERROR'
-    });
+    return next(new APIError(401, 'Unauthorized', 'Invalid Token'));
   }
 }
 module.exports = {

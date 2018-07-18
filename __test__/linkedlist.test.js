@@ -62,14 +62,14 @@ beforeEach(async () => {
      VALUES ('Nintendo', 'https://avatars0.githubusercontent.com/u/13444851?s=460&v=4', 'Nintendo', 'nintendo@gmail.com', $1) RETURNING *`,
     [nintendoCompanyPassword]
   );
-  // const warriorsCompanyResponse = await request(app)
-  //   .post('/company-auth')
-  //   .send({
-  //     handle: 'Warriors',
-  //     password: 'pw'
-  //   });
-  // auth.company_token = warriorsCompanyResponse.body.token;
-  // auth.current_handle = jwt.decode(auth.company_token).handle;
+  const warriorsCompanyResponse = await request(app)
+    .post('/company-auth')
+    .send({
+      handle: 'Warriors',
+      password: 'pw'
+    });
+  auth.company_token = warriorsCompanyResponse.body.token;
+  auth.current_handle = jwt.decode(auth.company_token).handle;
   // login a user, get a token, store the user ID and token
   //
   const hashedPassword = await bcrypt.hash('secret', 1);
@@ -338,16 +338,27 @@ describe(`DELETE /users/:username`, () => {
   });
 
   // figure out later
+  // issue is that even when another user is logged in you are able to delete
   // should not be able to delete another user
+  // test('cannot delete other user', async () => {
+  //   const username = 'wrongUser';
+  //   const response = await request(app)
+  //     .delete(`/users/${username}`)
+  //     .set('authorization', auth.user_token);
+  //   console.log(auth.user_token);
+  //   delete auth.current_username;
+  //   delete auth.user_token;
+  //   expect(response.status).toBe(403);
+  // });
   test('cannot delete other user', async () => {
-    const username = 'wrongUser';
+    const username = auth.current_username + '1';
     const response = await request(app)
       .delete(`/users/${username}`)
       .set('authorization', auth.user_token);
-    console.log(auth.user_token);
     delete auth.current_username;
     delete auth.user_token;
     expect(response.status).toBe(403);
+    expect(response.body.error.title).toBe('Forbidden');
   });
 });
 
@@ -360,76 +371,101 @@ describe(`GET /companies`, () => {
     expect(response.body[0].name).toBe('Warriors');
   });
 
-  test('gets all the companies', async () => {
+  test('do not allow for invalid token to view companies', async () => {
     const response = await request(app)
       .get('/companies')
-      .set('authorization', auth.company_token);
-    expect(response.status).toBe(200);
-    expect(response.body[0].name).toBe('Warriors');
+      .set('authorization', 'wrong token');
+    expect(response.status).toBe(401);
+    // response is different because I used API error
+    expect(response.text).toBe(
+      '{"error":{"status":401,"title":"Unauthorized","message":"Token not recognized"}}'
+    );
   });
 });
 
-// describe(`GET / companies/:handle`, () => {
-//   test('gets a list of 1 company', async () => {
-//     const response = await request(app)
-//       .get(`/companies/${auth.current_handle}`)
-//       .set('authorization', auth.company_token);
-//     expect(response.status).toBe(200);
-//     expect(response.body.name).toBe('michael');
-//   });
-// });
+describe(`GET / companies/:handle`, () => {
+  test('gets a list of 1 company', async () => {
+    const response = await request(app)
+      .get(`/companies/${auth.current_handle}`)
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe('Warriors');
+  });
 
-// describe(`PATCH / companies/:handle`, () => {
-//   test('successfully updates a company', async () => {
-//     const response = await request(app)
-//       .patch(`/companies/${auth.current_handle}`)
-//       .send({
-//         name: 'rithm',
-//         email: 'google@gmail.com',
-//         handle: 'rithm',
-//         password: 'foo123',
-//         logo: 'https://avatars0.githubusercontent.com/u/13444851?s=460&v=4'
-//       })
-//       .set('authorization', auth.company_token);
-//     expect(response.status).toBe(200);
-//     expect(response.body.name).toBe('rithm');
-//   });
-// });
+  test('cannot view other companies', async () => {
+    const response = await request(app)
+      .get(`/companies/Nintendo`)
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(403);
+    expect(response.text).toBe(
+      '{"error":{"status":403,"title":"Forbidden","message":"Forbidden User"}}'
+    );
+  });
 
-// describe(`POST /jobs`, () => {
-//   test('successfully post a new job from one company', async () => {
-//     const response = await request(app)
-//       .post('/jobs')
-//       .set('authorization', auth.company_token)
-//       .send({
-//         title: 'Gamer Tester',
-//         company: 'rithm',
-//         salary: '200000',
-//         equity: 5.5
-//       });
-//     //console.log(response.body);
-//     expect(response.status).toBe(200);
-//     expect(response.body.company).toBe('rithm');
-//   });
-// });
+  test('if invalid token have correct error handler', async () => {
+    const response = await request(app)
+      .get(`/companies/${auth.current_handle}`)
+      .set('authorization', auth.company_token + '1');
+    expect(response.status).toBe(401);
+    expect(response.text).toBe(
+      '{"error":{"status":401,"title":"Unauthorized","message":"Invalid Token"}}'
+    );
+  });
+});
 
-// describe(`GET / jobs`, () => {
-//   test('gets all the jobs', async () => {
-//     const response = await request(app)
-//       .get('/jobs')
-//       .set('authorization', auth.company_token);
-//     expect(response.status).toBe(200);
-//     expect(response.body[0].title).toBe('Gamer Tester');
-//   });
-// });
+describe(`PATCH / companies/:handle`, () => {
+  test('successfully updates a company', async () => {
+    const response = await request(app)
+      .patch(`/companies/${auth.current_handle}`)
+      .send({
+        name: 'rithm',
+        email: 'google@gmail.com',
+        handle: 'rithm',
+        password: 'foo123',
+        logo: 'https://avatars0.githubusercontent.com/u/13444851?s=460&v=4'
+      })
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe('rithm');
+  });
+});
+
+describe(`POST /jobs`, () => {
+  test('successfully post a new job from one company', async () => {
+    const response = await request(app)
+      .post('/jobs')
+      .set('authorization', auth.company_token)
+      .send({
+        title: 'Gamer Tester',
+        company: 'Warriors',
+        salary: '200000',
+        equity: 5.5
+      });
+    //console.log(response.body);
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('Gamer Tester');
+  });
+});
+
+describe(`GET / jobs`, () => {
+  test('gets all the jobs', async () => {
+    const response = await request(app)
+      .get('/jobs')
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body[0].title).toBe('Super Engineer');
+  });
+});
 
 // describe(`GET / jobs/:id`, () => {
 //   test('gets a list of 1 jobs', async () => {
+//     //console.log('TOKEN', auth.company_token);
 //     const response = await request(app)
 //       .get(`/jobs/1`)
 //       .set('authorization', auth.company_token);
+//     console.log();
 //     expect(response.status).toBe(200);
-//     expect(response.body.company).toBe('rithm');
+//     expect(response.body.company).toBe('Super Engineer');
 //   });
 // });
 
@@ -459,14 +495,14 @@ describe(`GET /companies`, () => {
 //   });
 // });
 
-// describe(`DELETE / companies/:handle`, () => {
-//   test('successfully deletes own company', async () => {
-//     const response = await request(app)
-//       .delete(`/companies/${auth.current_handle}`)
-//       .set('authorization', auth.company_token);
-//     delete auth.current_handle;
-//     delete auth.company_token;
-//     expect(response.status).toBe(200);
-//     expect(response.body).toEqual({ message: 'Deleted company!' });
-//   });
-// });
+describe(`DELETE / companies/:handle`, () => {
+  test('successfully deletes own company', async () => {
+    const response = await request(app)
+      .delete(`/companies/${auth.current_handle}`)
+      .set('authorization', auth.company_token);
+    delete auth.current_handle;
+    delete auth.company_token;
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ message: 'Deleted company!' });
+  });
+});

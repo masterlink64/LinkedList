@@ -101,7 +101,7 @@ router.post('', async function(req, res, next) {
   }
 });
 
-router.get('/:handle', ensureloggedin, async function(req, res, next) {
+router.get('/:handle', ensureCorrectCompany, async function(req, res, next) {
   try {
     const companiesData = await db.query(
       'SELECT * FROM companies WHERE handle=$1',
